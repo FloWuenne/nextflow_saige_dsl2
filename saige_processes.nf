@@ -3,8 +3,8 @@ process saige_step1_bin {
     publishDir "${params.outdir}/gwas_1_fit_null_glmm", mode: 'copy'
 
     input:
-    tuple val(grm_plink_input), file(bed), file(bim), file(fam)
-    each file(phenoFile)
+    tuple val(grm_plink_input), path(bed), path(bim), path(fam)
+    path(phenoFile)
     val phenoCol
     val covarColList
     val sampleIDcol
@@ -31,34 +31,36 @@ process saige_step1_bin {
   }
 
   process saige_step2_spa {
-  tag "$name"
+  tag "$chr"
   publishDir "${params.outdir}/gwas_2_spa_tests", mode: 'copy'
 
   input:
-  tuple val(name), val(chr), file(vcf), file(index)
-  file rda
-  file varianceRatio
-  file sampleFile
+  val(bgen_filebase)
+  val(bgen_path)
+  each chrom
+  path(rda)
+  path(varianceRatio)
+  path(sampleFile)
   val vcfField
   val minMAC
   val minMAF
 
   output:
-  file("*.SAIGE.gwas.txt")
+  path "*"
+  path("chr${chrom}.SAIGE.gwas.txt"), emit: assoc_res
 
   script:
   """
   step2_SPAtests.R \
-    --bgenFile=${vcf} \
-    --vcfFileIndex=${index} \
-    --bgenFileIndex=${vcfField} \
-    --chrom=${chr} \
+    --bgenFile=$bgen_path/$bgen_filebase".chr"$chrom".bgen" \
+    --bgenFileIndex=$bgen_path/$bgen_filebase".chr"$chrom".bgen.bgi" \
+    --chrom=${chrom} \
     --minMAC=${minMAC} \
     --minMAF=${minMAF} \
     --sampleFile=${sampleFile} \
     --GMMATmodelFile=${rda} \
     --varianceRatioFile=${varianceRatio} \
-    --SAIGEOutputFile="step2_SPAtests.${name}.SAIGE.gwas.txt" \
+    --SAIGEOutputFile="chr${chrom}.SAIGE.gwas.txt" \
     --numLinesOutput=2 \
     --IsOutputAFinCaseCtrl=TRUE \
     --IsDropMissingDosages=FALSE \

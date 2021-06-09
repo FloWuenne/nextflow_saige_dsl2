@@ -7,8 +7,9 @@ nextflow run main.nf \
 --phenoFile "/home/florian/Postdoc/Valve_disease_GWAS/nextflow_pipeline/nextflow_saige_dsl2/test_data/input/pheno_1000samples.txt_withdosages_withBothTraitTypes.txt" \
 --phenoCol "y_binary" \
 --covarColList "x1,x2" \
---bgen_list "/home/florian/Postdoc/Valve_disease_GWAS/nextflow_pipeline/nextflow_saige_dsl2/test_data/input/test_bgen_list.csv" \
+--bgen_filebase "genotype_100markers" \
+--bgen_path "/home/florian/Postdoc/Valve_disease_GWAS/nextflow_pipeline/nextflow_saige_dsl2/test_data/input" \
 --sampleFile "/home/florian/Postdoc/Valve_disease_GWAS/nextflow_pipeline/nextflow_saige_dsl2/test_data/input/samplefileforbgen_10000samples.txt" \
---varianceRatio "/home/florian/Postdoc/Valve_disease_GWAS/nextflow_pipeline/saige_test_out/nf_workflow/gwas_1_fit_null_glmm/step1_pheno_1000samples.txt_withdosages_withBothTraitTypes.varianceRatio.txt" \
---rda "/home/florian/Postdoc/Valve_disease_GWAS/nextflow_pipeline/saige_test_out/nf_workflow/gwas_1_fit_null_glmm/step1_pheno_1000samples.txt_withdosages_withBothTraitTypes_out.rda" \
 --outdir "/home/florian/Postdoc/Valve_disease_GWAS/nextflow_pipeline/saige_test_out/nf_workflow"
+
+#--bgen_files '/home/florian/Postdoc/Valve_disease_GWAS/nextflow_pipeline/nextflow_saige_dsl2/test_data/input/genotype_100markers.chr*.bgen' \
