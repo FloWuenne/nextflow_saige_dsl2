@@ -53,19 +53,28 @@ include { saige_step1_bin; saige_step2_spa } from './saige_processes'
 
 workflow {
 
-   plink_input_ch = 
-   Channel
+   plink_input_ch = Channel
         .fromFilePairs("${params.grm_plink_input}", size:3, flat : true, checkExists: true)
         .ifEmpty { exit 1, "PLINK files not found: ${params.grm_plink_input}.\nPlease specify a valid --grm_plink_input value. eg. testdata/*.{bed,bim,fam}" }
 
-   phenoFile_ch = 
-   Channel
+   phenoFile_ch = Channel
         .fromPath(params.phenoFile)
         .ifEmpty { exit 1, "Cannot find pheno_File file : ${params.phenoFile}" } 
 
-   saige_step1_bin(plink_input_ch , phenoFile_ch, phenoCol = params.phenoCol, covarColList = params.covarColList, sampleIDcol =  params.sampleIDcol)
+   saige_step1_bin(plink_input_ch , phenoFile = phenoFile_ch, phenoCol = params.phenoCol, covarColList = params.covarColList, sampleIDcol =  params.sampleIDcol)
     
-   saige_step2_spa(bgen_filebase = params.bgen_filebase,bgen_path = params.bgen_path ,  chrom = params.chrom, rda = saige_step1_bin.out.rda, varianceRatio = saige_step1_bin.out.varRatio,  sampleFile = channel.fromPath(params.sampleFile), vcfField = params.vcfField , minMAC = params.minMAC, minMAF = params.minMAF)
+   saige_step2_spa(  bgen_filebase = params.bgen_filebase,
+                     bgen_path = params.bgen_path ,  
+                     chrom = params.chrom, 
+                     rda = saige_step1_bin.out.rda, 
+                     varianceRatio = saige_step1_bin.out.varRatio,  
+                     sampleFile = channel.fromPath(params.sampleFile), 
+                     vcfField = params.vcfField , 
+                     minMAC = params.minMAC, 
+                     minMAF = params.minMAF,
+                     phenotype = phenoFile_ch)
+
+   saige_step2_spa.out.assoc_res.view()
 }
 
 workflow.onComplete {
