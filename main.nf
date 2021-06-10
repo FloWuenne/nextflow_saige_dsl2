@@ -41,7 +41,6 @@ sampleIDcol       :  ${params.sampleIDcol}
 
 Step2 parameters
 ===================================
-bgen_list         :  ${params.bgen_list}
 sampleFile        :  ${params.sampleFile}
 vcfField          :  ${params.vcfField}
 minMAC            :  ${params.minMAC}
@@ -53,26 +52,33 @@ include { saige_step1_bin; saige_step2_spa } from './saige_processes'
 
 workflow {
 
-   plink_input_ch = Channel
-        .fromFilePairs("${params.grm_plink_input}", size:3, flat : true, checkExists: true)
-        .ifEmpty { exit 1, "PLINK files not found: ${params.grm_plink_input}.\nPlease specify a valid --grm_plink_input value. eg. testdata/*.{bed,bim,fam}" }
+   Channel
+      .fromFilePairs("${params.grm_plink_input}", size:3, flat : true, checkExists: true)
+      .ifEmpty { exit 1, "PLINK files not found: ${params.grm_plink_input}.\nPlease specify a valid --grm_plink_input value. eg. testdata/*.{bed,bim,fam}" }
+      .set { plink_input_ch }
 
-   phenoFile_ch = Channel
-        .fromPath(params.phenoFile)
-        .ifEmpty { exit 1, "Cannot find pheno_File file : ${params.phenoFile}" } 
-
-   saige_step1_bin(plink_input_ch , phenoFile = phenoFile_ch, phenoCol = params.phenoCol, covarColList = params.covarColList, sampleIDcol =  params.sampleIDcol)
+   Channel
+      .fromPath(params.phenoFile)
+      .ifEmpty { exit 1, "Cannot find pheno_File file : ${params.phenoFile}" } 
+      .set{ phenoFile_ch }
    
-   saige_step1_bin.out.step1_res.view()
+   saige_step1_bin(plink_input_ch , phenoFile = phenoFile_ch, phenoCol = params.phenoCol, covarColList = params.covarColList, sampleIDcol =  params.sampleIDcol)
 
-   saige_step2_spa(  bgen_filebase = params.bgen_filebase,
-                     bgen_path = params.bgen_path ,  
-                     chrom = params.chrom, 
-                     saige_step1_bin.out.step1_res,
-                     sampleFile = channel.fromPath(params.sampleFile), 
-                     vcfField = params.vcfField , 
-                     minMAC = params.minMAC, 
-                     minMAF = params.minMAF)
+   saige_step1_bin.out.step1_rda
+      .combine(saige_step1_bin.out.step1_varRatio, by:0)
+      .set { step1_out }
+
+   step1_out.view()
+
+   saige_step2_spa(bgen_filebase = params.bgen_filebase,
+                  bgen_path = params.bgen_path ,
+                  chrom = params.chrom,
+                  step1_out,
+                  sampleFile = channel.fromPath(params.sampleFile),
+                  vcfField = params.vcfField ,
+                  minMAC = params.minMAC, 
+                  minMAF = params.minMAF)
+
 }
 
 workflow.onComplete {

@@ -10,7 +10,8 @@ process saige_step1_bin {
     val sampleIDcol
 
     output:
-    tuple val(phenoFile.baseName), path("step1_${phenoFile.baseName}_out.rda"), path("step1_${phenoFile.baseName}.varianceRatio.txt"), emit: step1_res
+    tuple val(phenoFile.baseName), path("step1_${phenoFile.baseName}_out.rda"), emit: step1_rda
+    tuple val(phenoFile.baseName), path("step1_${phenoFile.baseName}.varianceRatio.txt"), emit: step1_varRatio
 
     script:
     """
@@ -37,7 +38,7 @@ process saige_step2_spa {
   val(bgen_filebase)
   val(bgen_path)
   each chrom
-  tuple val(phenotype), path(rda), path(varRatio)
+  tuple(val(phenotype), path(rda), path(varRatio))
   path(sampleFile)
   val vcfField
   val minMAC
@@ -45,7 +46,7 @@ process saige_step2_spa {
 
   output:
   path "*"
-  path("${phenotype}.chr${chrom}.SAIGE.gwas.txt"), emit: assoc_res
+  path("${phenotype}.chr${chrom}.SAIGE.gwas.txt", emit: assoc_res)
 
   script:
   """
@@ -73,7 +74,7 @@ process merge_chr_files {
   publishDir "${params.outdir}/merged_SAIGE_results/", mode: 'copy'
 
   input:
-  each assoc_res
+  path(assoc_res)
 
   output:
   set file("*top_n.csv"), file("*${params.output_tag}.csv")
