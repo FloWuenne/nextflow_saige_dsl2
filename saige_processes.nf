@@ -10,8 +10,7 @@ process saige_step1_bin {
     val sampleIDcol
 
     output:
-    path "step1_${phenoFile.baseName}_out.rda", emit: rda
-    path "step1_${phenoFile.baseName}.varianceRatio.txt", emit: varRatio
+    tuple val(phenoFile.baseName), path("step1_${phenoFile.baseName}_out.rda"), path("step1_${phenoFile.baseName}.varianceRatio.txt"), emit: step1_res
 
     script:
     """
@@ -31,24 +30,22 @@ process saige_step1_bin {
   }
 
 process saige_step2_spa {
-  tag "chr${chrom}.${phenoFile.baseName}"
-  publishDir "${params.outdir}/SAIGE_gwas_2_spa_tests/${phenoFile.baseName}_saige_step2", mode: 'copy'
+  tag "chr${chrom}.${phenotype}"
+  publishDir "${params.outdir}/SAIGE_gwas_2_spa_tests/${phenotype}_saige_step2", mode: 'copy'
 
   input:
   val(bgen_filebase)
   val(bgen_path)
   each chrom
-  path(rda)
-  path(varianceRatio)
+  tuple val(phenotype), path(rda), path(varRatio)
   path(sampleFile)
   val vcfField
   val minMAC
   val minMAF
-  each path(phenoFile)
 
   output:
   path "*"
-  path("${phenoFile.baseName}.chr${chrom}.SAIGE.gwas.txt"), emit: assoc_res
+  path("${phenotype}.chr${chrom}.SAIGE.gwas.txt"), emit: assoc_res
 
   script:
   """
@@ -60,8 +57,8 @@ process saige_step2_spa {
     --minMAF=${minMAF} \
     --sampleFile=${sampleFile} \
     --GMMATmodelFile=${rda} \
-    --varianceRatioFile=${varianceRatio} \
-    --SAIGEOutputFile=${phenoFile.baseName}.chr${chrom}.SAIGE.gwas.txt \
+    --varianceRatioFile=${varRatio} \
+    --SAIGEOutputFile=${phenotype}.chr${chrom}.SAIGE.gwas.txt \
     --numLinesOutput=2 \
     --IsOutputAFinCaseCtrl=TRUE \
     --IsDropMissingDosages=FALSE \

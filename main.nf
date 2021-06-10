@@ -62,19 +62,17 @@ workflow {
         .ifEmpty { exit 1, "Cannot find pheno_File file : ${params.phenoFile}" } 
 
    saige_step1_bin(plink_input_ch , phenoFile = phenoFile_ch, phenoCol = params.phenoCol, covarColList = params.covarColList, sampleIDcol =  params.sampleIDcol)
-    
+   
+   saige_step1_bin.out.step1_res.view()
+
    saige_step2_spa(  bgen_filebase = params.bgen_filebase,
                      bgen_path = params.bgen_path ,  
                      chrom = params.chrom, 
-                     rda = saige_step1_bin.out.rda, 
-                     varianceRatio = saige_step1_bin.out.varRatio,  
+                     saige_step1_bin.out.step1_res,
                      sampleFile = channel.fromPath(params.sampleFile), 
                      vcfField = params.vcfField , 
                      minMAC = params.minMAC, 
-                     minMAF = params.minMAF,
-                     phenotype = phenoFile_ch)
-
-   saige_step2_spa.out.assoc_res.view()
+                     minMAF = params.minMAF)
 }
 
 workflow.onComplete {
