@@ -1,5 +1,5 @@
 process saige_step1_bin {
-    tag "$grm_plink_input"
+    tag "$phenoFile"
     publishDir "${params.outdir}/SAIGE_gwas_1_fit_null_glmm", mode: 'copy'
 
     input:
@@ -10,8 +10,8 @@ process saige_step1_bin {
     val sampleIDcol
 
     output:
-    tuple val(phenoFile.baseName), path("step1_${phenoFile.baseName}_out.rda"), emit: step1_rda
-    tuple val(phenoFile.baseName), path("step1_${phenoFile.baseName}.varianceRatio.txt"), emit: step1_varRatio
+    val(phenoFile.baseName), emit: phenotype
+    tuple val(phenoFile.baseName), path("step1_${phenoFile.baseName}_out.rda"), path("step1_${phenoFile.baseName}.varianceRatio.txt"), emit: step1_out
 
     script:
     """
@@ -35,46 +35,47 @@ process saige_step2_spa {
   publishDir "${params.outdir}/SAIGE_gwas_2_spa_tests/${phenotype}_saige_step2", mode: 'copy'
 
   input:
+  tuple val(phenotype), val(rda), val(varRatio)
+  each chrom
   val(bgen_filebase)
   val(bgen_path)
-  each chrom
-  tuple(val(phenotype), path(rda), path(varRatio))
   path(sampleFile)
   val vcfField
   val minMAC
   val minMAF
 
   output:
-  path "*"
   path("${phenotype}.chr${chrom}.SAIGE.gwas.txt", emit: assoc_res)
+  val(phenotype), emit: phenotype
 
   script:
   """
   step2_SPAtests.R \
-    --bgenFile=${bgen_path}/${bgen_filebase}.chr${chrom}.bgen \
-    --bgenFileIndex=${bgen_path}/${bgen_filebase}.chr${chrom}.bgen.bgi \
-    --chrom=${chrom} \
-    --minMAC=${minMAC} \
-    --minMAF=${minMAF} \
-    --sampleFile=${sampleFile} \
-    --GMMATmodelFile=${rda} \
-    --varianceRatioFile=${varRatio} \
-    --SAIGEOutputFile=${phenotype}.chr${chrom}.SAIGE.gwas.txt \
-    --numLinesOutput=2 \
-    --IsOutputAFinCaseCtrl=TRUE \
-    --IsDropMissingDosages=FALSE \
-    --IsOutputNinCaseCtrl=TRUE \
-    --IsOutputHetHomCountsinCaseCtrl=TRUE \
-    --LOCO=FALSE
+        --bgenFile=${bgen_path}/${bgen_filebase}.chr${chrom}.bgen \
+        --bgenFileIndex=${bgen_path}/${bgen_filebase}.chr${chrom}.bgen.bgi \
+        --chrom=${chrom} \
+        --minMAC=${minMAC} \
+        --minMAF=${minMAF} \
+        --sampleFile=${sampleFile} \
+        --GMMATmodelFile=${rda} \
+        --varianceRatioFile=${varRatio} \
+        --SAIGEOutputFile=${phenotype}.chr${chrom}.SAIGE.gwas.txt \
+        --numLinesOutput=2 \
+        --IsOutputAFinCaseCtrl=TRUE \
+        --IsDropMissingDosages=FALSE \
+        --IsOutputNinCaseCtrl=TRUE \
+        --IsOutputHetHomCountsinCaseCtrl=TRUE \
+        --LOCO=FALSE
   """
 }
 
 process merge_chr_files {
-  tag "merge_assoc_files"
-  publishDir "${params.outdir}/merged_SAIGE_results/", mode: 'copy'
+  tag "${phenotype}"
+  publishDir "${params.outdir}/SAIGE_gwas_2_spa_tests/", mode: 'copy'
 
   input:
   path(assoc_res)
+  val(phenotype)
 
   output:
   set file("*top_n.csv"), file("*${params.output_tag}.csv")
@@ -82,12 +83,9 @@ process merge_chr_files {
   script:
 
   """
-  # creates 2 .csv files, saige_results_<params.output_tag>.csv, saige_results_top_n.csv
-  concat_chroms.R \
-    --saige_output_name='saige_results' \
-    --filename_pattern='${params.saige_filename_pattern}' \
-    --output_tag='${params.output_tag}' \
-    --top_n_sites=${params.top_n_sites} \
-    --max_top_n_sites=${params.max_top_n_sites}
+for assocFile in ${assoc_res}
+    do
+        cat \$assocFile >> concatenatedBootstrapTrees.nwk
+    done
   """
 }

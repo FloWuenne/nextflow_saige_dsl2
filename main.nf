@@ -62,22 +62,19 @@ workflow {
       .ifEmpty { exit 1, "Cannot find pheno_File file : ${params.phenoFile}" } 
       .set{ phenoFile_ch }
    
-   saige_step1_bin(plink_input_ch , phenoFile = phenoFile_ch, phenoCol = params.phenoCol, covarColList = params.covarColList, sampleIDcol =  params.sampleIDcol)
+   saige_step1_bin(plink_input_ch , phenoFile_ch, params.phenoCol, params.covarColList, params.sampleIDcol) 
 
-   saige_step1_bin.out.step1_rda
-      .combine(saige_step1_bin.out.step1_varRatio, by:0)
-      .set { step1_out }
+   saige_step2_spa(saige_step1_bin.out.step1_out,
+                  params.chrom,
+                  params.bgen_filebase, 
+                  params.bgen_path ,
+                  params.sampleFile,
+                  params.vcfField ,
+                  params.minMAC,
+                  params.minMAF)
 
-   step1_out.view()
-
-   saige_step2_spa(bgen_filebase = params.bgen_filebase,
-                  bgen_path = params.bgen_path ,
-                  chrom = params.chrom,
-                  step1_out,
-                  sampleFile = channel.fromPath(params.sampleFile),
-                  vcfField = params.vcfField ,
-                  minMAC = params.minMAC, 
-                  minMAF = params.minMAF)
+   saige_step2_spa.out.assoc_res
+      .collectFile(keepHeader:true,skip:1, sort: false, name:"SAIGE.merged_step2.asssoc.tsv", storeDir:"${params.outdir}/${saige_step2_spa.out.phenotype}")
 
 }
 
