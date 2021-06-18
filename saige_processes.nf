@@ -67,19 +67,16 @@ process saige_step2_spa {
   """
 }
 
-static String toSnakeCase( String text ) {
-text.replaceAll( /([A-Z])/, /_$1/ ).toLowerCase().replaceAll( /^_/, '' )
-}
-
 process prepare_files {
-  tag "preparation_files"
+  tag "merging_chromosomes.${phenotype}"
   publishDir "${params.outdir}/${phenotype}", mode: 'copy'
 
   input:
   tuple val(phenotype), path(merged_assoc)
 
   output:
-  tuple val(phenotype), path("saige_results_${phenotype}_top_n.csv"), path("saige_results_${toSnakeCase(phenotype).replaceAll("\\.","_")}.csv") , emit: chr_files
+  tuple val(phenotype), path("saige_results_${phenotype}_top_n.csv"), emit: top_hits
+  tuple val(phenotype), path("saige_results_${phenotype}.csv"), emit: merged_out
   
 
   script:
@@ -95,38 +92,33 @@ process prepare_files {
   """
 }
 
-process create_report {
-tag "report"
-publishDir "${params.outdir}/${phenotype}/MultiQC/", mode: 'copy'
+process create_plots {
+tag "plotting.${phenotype}"
+publishDir "${params.outdir}/${phenotype}/final", mode: 'copy'
 
 input:
-tuple val(phenotype), path(top_hits), path(saige_res)
-path(ch_gwas_cat)
+tuple val(phenotype), path(saige_res), path(top_hits), path(ch_gwas_cat)
 
 output:
-file "multiqc_report.html"
-tuple file("*png"), file("*ipynb"), file("*csv")
+tuple file("*png"), file("*csv")
 
 script:
-
 """
 cp /opt/bin/* .
+rm logo.png
+rm covid_1_manhattan.png
 # creates gwascat_subset.csv
 subset_gwascat.R \
-  --saige_output='${saige_res}' \
+  --saige_output='saige_results_${phenotype}.csv' \
   --gwas_cat='${ch_gwas_cat}'
 # creates <params.output_tag>_manhattan.png with analysis.csv as input
 manhattan.R \
-  --saige_output='${saige_res}' \
+  --saige_output='saige_results_${phenotype}.csv' \
   --output_tag='${phenotype}'
 # creates <params.output_tag>_qqplot_ci.png with analysis.csv as input
 qqplot.R \
-  --saige_output='${saige_res}' \
+  --saige_output='saige_results_${phenotype}.csv' \
   --output_tag='${phenotype}'
-# Generates the report
-Rscript -e "rmarkdown::render('gwas_report.Rmd', params = list(manhattan='${phenotype}_manhattan.png',qqplot='${phenotype}_qqplot_ci.png', saige_results='saige_results_${phenotype}_top_n.csv', trait_type='${params.trait_type}'))"
-mv gwas_report.html multiqc_report.html
-# Generates the ipynb
-jupytext --to ipynb gwas_report.Rmd
+  mv gwascat_subset.csv gwascat_subset_${phenotype}.csv
 """
 }

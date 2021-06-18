@@ -48,7 +48,7 @@ minMAF            :  ${params.minMAF}
 """
 
 /* Include processes from saige_processes.nf */
-include { saige_step1_bin; saige_step2_spa; prepare_files; create_report } from './saige_processes'
+include { saige_step1_bin; saige_step2_spa; prepare_files; create_plots } from './saige_processes'
 
 workflow {
 
@@ -79,18 +79,17 @@ workflow {
 
    prepare_files(tuple_assoc)
 
-   prepare_files.out.chr_files
-      .groupTuple()
-      .set{ saige_res }
-
-   saige_res.view()
-
    Channel
       .fromPath(params.gwas_cat)
       .ifEmpty { exit 1, "Cannot find GWAS catalogue CSV  file : ${params.gwas_cat}" }
       .set { ch_gwas_cat }
 
-   create_report(saige_res,ch_gwas_cat)
+   prepare_files.out.merged_out
+      .join(prepare_files.out.top_hits)
+      .combine(ch_gwas_cat)
+      .set{ saige_res }
+
+   create_plots(saige_res)
 
 
 }
