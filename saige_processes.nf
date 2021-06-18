@@ -1,6 +1,6 @@
 process saige_step1_bin {
-    tag "$phenoFile"
-    publishDir "${params.outdir}/SAIGE_gwas_1_fit_null_glmm", mode: 'copy'
+    tag "${phenoFile.baseName}"
+    publishDir "${params.outdir}/${phenoFile.baseName}/SAIGE_out_step1", mode: 'copy'
 
     input:
     tuple val(grm_plink_input), path(bed), path(bim), path(fam)
@@ -25,14 +25,13 @@ process saige_step1_bin {
       --outputPrefix="step1_${phenoFile.baseName}_out" \
       --outputPrefix_varRatio="step1_${phenoFile.baseName}" \
       --nThreads=${task.cpus} \
-      --LOCO=FALSE \
-      --IsOverwriteVarianceRatioFile=TRUE
+      --IsOverwriteVarianceRatioFile=TRUE 
     """
   }
 
 process saige_step2_spa {
   tag "chr${chrom}.${phenotype}"
-  publishDir "${params.outdir}/SAIGE_gwas_2_spa_tests/${phenotype}_saige_step2", mode: 'copy'
+  publishDir "${params.outdir}/${phenotype}/SAIGE_out_step2", mode: 'copy'
 
   input:
   tuple val(phenotype), val(rda), val(varRatio)
@@ -45,8 +44,7 @@ process saige_step2_spa {
   val minMAF
 
   output:
-  path("${phenotype}.chr${chrom}.SAIGE.gwas.txt", emit: assoc_res)
-  val(phenotype), emit: phenotype
+  tuple val(phenotype), path("${phenotype}.chr${chrom}.SAIGE.gwas.txt"), emit: assoc_res
 
   script:
   """
@@ -69,23 +67,66 @@ process saige_step2_spa {
   """
 }
 
-process merge_chr_files {
-  tag "${phenotype}"
-  publishDir "${params.outdir}/SAIGE_gwas_2_spa_tests/", mode: 'copy'
+static String toSnakeCase( String text ) {
+text.replaceAll( /([A-Z])/, /_$1/ ).toLowerCase().replaceAll( /^_/, '' )
+}
+
+process prepare_files {
+  tag "preparation_files"
+  publishDir "${params.outdir}/${phenotype}", mode: 'copy'
 
   input:
-  path(assoc_res)
-  val(phenotype)
+  tuple val(phenotype), path(merged_assoc)
 
   output:
-  set file("*top_n.csv"), file("*${params.output_tag}.csv")
+  tuple val(phenotype), path("saige_results_${phenotype}_top_n.csv"), path("saige_results_${toSnakeCase(phenotype).replaceAll("\\.","_")}.csv") , emit: chr_files
+  
 
   script:
+  """
+  # creates 2 .csv files, saige_results_<params.output_tag>.csv, saige_results_top_n.csv
+  concat_chroms.R \
+    --saige_output_name='saige_results' \
+    --filename_pattern='${phenotype}.*' \
+    --output_tag='${phenotype}' \
+    --top_n_sites=${params.top_n_sites} \
+    --max_top_n_sites=${params.max_top_n_sites}
+    mv saige_results_top_n.csv saige_results_${phenotype}_top_n.csv
+  """
+}
 
-  """
-for assocFile in ${assoc_res}
-    do
-        cat \$assocFile >> concatenatedBootstrapTrees.nwk
-    done
-  """
+process create_report {
+tag "report"
+publishDir "${params.outdir}/${phenotype}/MultiQC/", mode: 'copy'
+
+input:
+tuple val(phenotype), path(top_hits), path(saige_res)
+path(ch_gwas_cat)
+
+output:
+file "multiqc_report.html"
+tuple file("*png"), file("*ipynb"), file("*csv")
+
+script:
+
+"""
+cp /opt/bin/* .
+# creates gwascat_subset.csv
+subset_gwascat.R \
+  --saige_output='${saige_res}' \
+  --gwas_cat='${ch_gwas_cat}'
+# creates <params.output_tag>_manhattan.png with analysis.csv as input
+manhattan.R \
+  --saige_output='${saige_res}' \
+  --output_tag='${phenotype}'
+# creates <params.output_tag>_qqplot_ci.png with analysis.csv as input
+qqplot.R \
+  --saige_output='${saige_res}' \
+  --output_tag='${phenotype}'
+# Generates the report
+Rscript -e "rmarkdown::render('gwas_report.Rmd', params = list(manhattan='${phenotype}_manhattan.png',qqplot='${phenotype}_qqplot_ci.png', saige_results='saige_results_${phenotype}_top_n.csv', trait_type='${params.trait_type}'))"
+mv gwas_report.html multiqc_report.html
+# Generates the ipynb
+jupytext --to ipynb gwas_report.Rmd
+"""
 }

@@ -27,8 +27,8 @@ params.chrom = ['1','2']
 
 /* log info */
 log.info """\
- NEXTFLOW - DSL2 - SAIGE - P I P E L I N E
- ===================================
+NEXTFLOW - DSL2 - SAIGE - P I P E L I N E
+===================================
 
 Step1 parameters
 ===================================
@@ -48,7 +48,7 @@ minMAF            :  ${params.minMAF}
 """
 
 /* Include processes from saige_processes.nf */
-include { saige_step1_bin; saige_step2_spa } from './saige_processes'
+include { saige_step1_bin; saige_step2_spa; prepare_files; create_report } from './saige_processes'
 
 workflow {
 
@@ -74,7 +74,24 @@ workflow {
                   params.minMAF)
 
    saige_step2_spa.out.assoc_res
-      .collectFile(keepHeader:true,skip:1, sort: false, name:"SAIGE.merged_step2.asssoc.tsv", storeDir:"${params.outdir}/${saige_step2_spa.out.phenotype}")
+      .groupTuple()
+      .set{ tuple_assoc }
+
+   prepare_files(tuple_assoc)
+
+   prepare_files.out.chr_files
+      .groupTuple()
+      .set{ saige_res }
+
+   saige_res.view()
+
+   Channel
+      .fromPath(params.gwas_cat)
+      .ifEmpty { exit 1, "Cannot find GWAS catalogue CSV  file : ${params.gwas_cat}" }
+      .set { ch_gwas_cat }
+
+   create_report(saige_res,ch_gwas_cat)
+
 
 }
 

@@ -1,15 +1,27 @@
-## Test the nextflow workflow
-nextflow run main.nf \
--with-report "./test_report.html" \
--with-timeline "./test_timeline.html" \
--with-singularity "/home/florian/Postdoc/Valve_disease_GWAS/Programs/saige_0.43.2.sif" \
+# ## Test the nextflow workflow
+nextflow run main.nf -resume \
+-with-report "../nextflow_reports/test_report.html" \
+-with-timeline "../nextflow_reports/test_timeline.html" \
 --grm_plink_input "/home/florian/Postdoc/Valve_disease_GWAS/nextflow_pipeline/nextflow_saige_dsl2/test_data/input/nfam_100_nindep_0_step1_includeMoreRareVariants_poly.{bed,bim,fam}" \
 --phenoFile "/home/florian/Postdoc/Valve_disease_GWAS/nextflow_pipeline/nextflow_saige_dsl2/test_data/input/pheno*.txt" \
 --phenoCol "y_binary" \
 --covarColList "x1,x2" \
 --bgen_filebase "genotype_100markers" \
 --bgen_path "/home/florian/Postdoc/Valve_disease_GWAS/nextflow_pipeline/nextflow_saige_dsl2/test_data/input" \
---sampleFile "/home/florian/Postdoc/Valve_disease_GWAS/nextflow_pipeline/nextflow_saige_dsl2/test_data/input/samplefileforbgen_10000samples.txt" \
---outdir "/home/florian/Postdoc/Valve_disease_GWAS/nextflow_pipeline/saige_test_out/nf_workflow"
+--sampleFile "/home/florian/Postdoc/Valve_disease_GWAS/nextflow_pipeline/nextflow_saige_dsl2/test_data/input/samplefile_test_input.txt" \
+--outdir "../saige_test_out"
 
-#--bgen_files '/home/florian/Postdoc/Valve_disease_GWAS/nextflow_pipeline/nextflow_saige_dsl2/test_data/input/genotype_100markers.chr*.bgen' \
+
+## With relative file paths
+# ## Test the nextflow workflow
+# nextflow run main.nf -resume \
+# -with-report "../nextflow_reports/test_report.html" \
+# -with-timeline "../nextflow_reports/test_timeline.html" \
+# --grm_plink_input "./test_data/input/nfam_100_nindep_0_step1_includeMoreRareVariants_poly.{bed,bim,fam}" \
+# --phenoFile "./test_data/input/pheno*.txt" \
+# --phenoCol "y_binary" \
+# --covarColList "x1,x2" \
+# --bgen_filebase "genotype_100markers" \
+# --bgen_path "./test_data/input" \
+# --sampleFile "./test_data/input/samplefile_test_input.txt" \
+# --outdir "../saige_test_out"
