@@ -1,6 +1,7 @@
 process saige_step1_bin {
     tag "${phenoFile.baseName}"
     publishDir "${params.outdir}/${phenoFile.baseName}/SAIGE_out_step1", mode: 'copy'
+    clusterOptions "--account=def-glettre"
 
     input:
     tuple val(grm_plink_input), path(bed), path(bim), path(fam)
