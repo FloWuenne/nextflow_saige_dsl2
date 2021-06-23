@@ -50,8 +50,8 @@ process saige_step2_spa {
   script:
   """
   step2_SPAtests.R \
-        --bgenFile=${bgen_path}/${bgen_filebase}.chr${chrom}.bgen \
-        --bgenFileIndex=${bgen_path}/${bgen_filebase}.chr${chrom}.bgen.bgi \
+        --bgenFile=${bgen_path} \
+        --bgenFileIndex=${bgen_path}.bgi \
         --chrom=${chrom} \
         --minMAC=${minMAC} \
         --minMAF=${minMAF} \

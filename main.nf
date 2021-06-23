@@ -65,7 +65,6 @@ workflow {
    saige_step1_bin(plink_input_ch , phenoFile_ch, params.phenoCol, params.covarColList, params.sampleIDcol) 
 
    saige_step2_spa(saige_step1_bin.out.step1_out,
-                  params.chrom,
                   params.bgen_filebase, 
                   params.bgen_path ,
                   params.sampleFile,
