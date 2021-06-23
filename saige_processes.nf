@@ -26,7 +26,7 @@ process saige_step1_bin {
       --outputPrefix="step1_${phenoFile.baseName}_out" \
       --outputPrefix_varRatio="step1_${phenoFile.baseName}" \
       --nThreads=${task.cpus} \
-      --IsOverwriteVarianceRatioFile=TRUE 
+      --IsOverwriteVarianceRatioFile=TRUE ${params.saige_step1_extra_flags}
     """
   }
 
@@ -106,17 +106,18 @@ tuple file("*png"), file("*csv")
 script:
 """
 cp /opt/bin/* .
+## remove default files from gel-gwas pipeline
 rm logo.png
 rm covid_1_manhattan.png
-# creates gwascat_subset.csv
+#
 subset_gwascat.R \
   --saige_output='saige_results_${phenotype}.csv' \
   --gwas_cat='${ch_gwas_cat}'
-# creates <params.output_tag>_manhattan.png with analysis.csv as input
+#
 manhattan.R \
   --saige_output='saige_results_${phenotype}.csv' \
   --output_tag='${phenotype}'
-# creates <params.output_tag>_qqplot_ci.png with analysis.csv as input
+#
 qqplot.R \
   --saige_output='saige_results_${phenotype}.csv' \
   --output_tag='${phenotype}'
