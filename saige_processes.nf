@@ -37,7 +37,8 @@ process saige_step2_spa {
   input:
   tuple val(phenotype), val(rda), val(varRatio)
   each chrom
-  val(bgen_filebase)
+  val(bgen_prefix)
+  val(bgen_suffix)
   val(bgen_path)
   path(sampleFile)
   val vcfField
@@ -50,8 +51,8 @@ process saige_step2_spa {
   script:
   """
   step2_SPAtests.R \
-        --bgenFile=${bgen_path}/${bgen_filebase}.chr${chrom}.bgen \
-        --bgenFileIndex=${bgen_path}/${bgen_filebase}.chr${chrom}.bgen.bgi \
+        --bgenFile=${bgen_path}/${bgen_prefix}chr${chrom}${bgen_suffix}bgen \
+        --bgenFileIndex=${bgen_path}/${bgen_prefix}chr${chrom}${bgen_suffix}bgen.bgi \
         --chrom=${chrom} \
         --minMAC=${minMAC} \
         --minMAF=${minMAF} \
@@ -69,7 +70,7 @@ process saige_step2_spa {
 }
 
 process prepare_files {
-  tag "merging_chromosomes.${phenotype}"
+  tag "${phenotype}"
   publishDir "${params.outdir}/${phenotype}", mode: 'copy'
 
   input:
@@ -94,7 +95,7 @@ process prepare_files {
 }
 
 process create_plots {
-tag "plotting.${phenotype}"
+tag "${phenotype}"
 publishDir "${params.outdir}/${phenotype}/final", mode: 'copy'
 
 input:

@@ -13,7 +13,8 @@ params.phenoCol = "test"
 params.covarColList = "234"
 params.sampleIDcol = "IID"
 
-params.bgen_filebase = "genotype_100markers"
+params.bgen_prefix = "genotype_100markers"
+params.bgen_suffix = "."
 params.bgen_path = "."
 params.bgen_dir = "."
 params.sampleFile = "samplefileforbgen_10000samples.txt"
@@ -23,7 +24,7 @@ params.vcfField = "GT"
 params.minMAC = "3"
 params.minMAF = "0.0001"
 /*params.chrom = ['1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22','X'] */
-/* params.chrom = ['1','2'] */
+params.chrom = ['1','2']
 
 /* log info */
 log.info """\
@@ -41,6 +42,9 @@ sampleIDcol       :  ${params.sampleIDcol}
 
 Step2 parameters
 ===================================
+bgen_prefix       :  ${params.bgen_prefix}
+bgen_suffix       :  ${params.bgen_suffix}
+bgen_path       :  ${params.bgen_path}
 sampleFile        :  ${params.sampleFile}
 vcfField          :  ${params.vcfField}
 minMAC            :  ${params.minMAC}
@@ -66,7 +70,8 @@ workflow {
 
    saige_step2_spa(saige_step1_bin.out.step1_out,
                   params.chrom,
-                  params.bgen_filebase, 
+                  params.bgen_prefix, 
+                  params.bgen_suffix, 
                   params.bgen_path ,
                   params.sampleFile,
                   params.vcfField ,
