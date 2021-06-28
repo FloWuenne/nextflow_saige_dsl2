@@ -7,7 +7,7 @@ nextflow run main.nf -resume \
 --phenoFile "$work_dir/test_data/input/pheno*.txt" \
 --phenoCol "y_binary" \
 --covarColList "x1,x2" \
---bgen_prefix "genotype_100markers." \
+--bgen_prefix "genotype_100markers.chr" \
 --bgen_suffix "." \
 --bgen_path "$work_dir/test_data/input" \
 --sampleFile "$work_dir/test_data/input/samplefile_test_input.txt" \

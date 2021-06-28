@@ -5,27 +5,6 @@
 /* Enable DSL2 syntax */
 nextflow.enable.dsl=2
 
-/* Define parameters */
-params.grm_plink_input = "plink_files"
-params.phenoFile = "phenoFile"
-params.outdir = "results"
-params.phenoCol = "test"
-params.covarColList = "234"
-params.sampleIDcol = "IID"
-
-params.bgen_prefix = "genotype_100markers"
-params.bgen_suffix = "."
-params.bgen_path = "."
-params.bgen_dir = "."
-params.sampleFile = "samplefileforbgen_10000samples.txt"
-params.varianceRatio = "varianceRatio"
-params.rda = "test"
-params.vcfField = "GT"
-params.minMAC = "3"
-params.minMAF = "0.0001"
-/*params.chrom = ['1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22','X'] */
-params.chrom = ['1','2']
-
 /* log info */
 log.info """\
 NEXTFLOW - DSL2 - SAIGE - P I P E L I N E
@@ -44,7 +23,8 @@ Step2 parameters
 ===================================
 bgen_prefix       :  ${params.bgen_prefix}
 bgen_suffix       :  ${params.bgen_suffix}
-bgen_path       :  ${params.bgen_path}
+bgen_path         :  ${params.bgen_path}
+chromosomes       :  ${params.chrom}
 sampleFile        :  ${params.sampleFile}
 vcfField          :  ${params.vcfField}
 minMAC            :  ${params.minMAC}
