@@ -8,7 +8,7 @@ nextflow run main.nf -resume \
 --phenoCol "y_binary" \
 --covarColList "x1,x2" \
 --bgen_prefix "genotype_100markers.chr" \
---bgen_suffix "." \
+--bgen_suffix ".bgen" \
 --bgen_path "$work_dir/test_data/input" \
 --sampleFile "$work_dir/test_data/input/samplefile_test_input.txt" \
 --outdir "../saige_test_out" \
