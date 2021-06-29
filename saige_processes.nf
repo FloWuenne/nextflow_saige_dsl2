@@ -114,6 +114,8 @@ subset_gwascat.R \
   --saige_output='saige_results_${phenotype}.csv' \
   --gwas_cat='${ch_gwas_cat}'
 #
+sed -i~ 's/X/23/g;s/chrX/chr23/g' 'saige_results_${phenotype}.csv'
+#
 manhattan.R \
   --saige_output='saige_results_${phenotype}.csv' \
   --output_tag='${phenotype}'
